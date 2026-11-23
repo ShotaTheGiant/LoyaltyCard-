@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0e0f12">
+<title>Loyalty Card Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=Oswald:wght@400;600&family=Playfair+Display:ital,wght@0,600;1,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--ui-bg:#0e0f12;--ui-panel:#17191e;--ui-line:#2a2d35;--ui-text:#eceef2;--ui-mute:#8b91a0;--ui-brand:#8aa6ff;--ok:#3ecf8e;--bad:#ff6b6b}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--ui-bg);color:var(--ui-text);-webkit-font-smoothing:antialiased}
+.hidden{display:none!important}
+button{font:inherit;cursor:pointer}
+
+/* ---------- ADMIN ---------- */
+.admin{max-width:1120px;margin:0 auto;padding:28px 16px 70px}
+.admin h1{font-size:24px;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--ui-mute);margin:0 0 22px;font-size:14px;line-height:1.5}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:20px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--ui-panel);border:1px solid var(--ui-line);border-radius:16px;padding:18px 18px 20px;margin-bottom:20px}
+.panel h2{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--ui-mute);margin:0 0 6px;font-weight:700}
+label{display:block;font-size:13px;color:var(--ui-mute);margin:14px 0 6px}
+input,select{width:100%;background:#0f1115;border:1px solid var(--ui-line);color:var(--ui-text);border-radius:10px;padding:11px 12px;font:inherit;font-size:15px;outline:none}
+input:focus,select:focus{border-color:var(--ui-brand)}
+input[type=color]{padding:3px;height:44px;cursor:pointer}
+.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
+.themes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.theme-opt{background:#0f1115;border:1.5px solid var(--ui-line);border-radius:12px;padding:10px 8px;color:var(--ui-text);display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13px;font-weight:500}
+.theme-opt.on{border-color:var(--ui-brand);background:#141826}
+.sw{width:100%;height:36px;border-radius:8px}
+.sw.restaurant{background:linear-gradient(135deg,#f6efe2 55%,#c2562f 55%)}
+.sw.bar{background:linear-gradient(135deg,#0d0e1a 55%,#ffb020 55%);box-shadow:inset 0 0 0 1px #2a2d35}
+.sw.barber{background:repeating-linear-gradient(-45deg,#c8202f 0 7px,#f3ece0 7px 14px,#1d3f8f 14px 21px,#f3ece0 21px 28px)}
+.btn{border:1px solid var(--ui-line);background:#1f222a;color:var(--ui-text);border-radius:10px;padding:10px 14px;font-size:14px;font-weight:500;white-space:nowrap}
+.btn:hover{background:#262a33}
+.btn.primary{background:var(--ui-brand);border-color:var(--ui-brand);color:#0b0d14;font-weight:700}
+.btn.small{padding:7px 10px;font-size:13px}
+.btn.danger{color:var(--bad)}
+.serial-row{display:flex;gap:8px}
+.serial-row input{font-family:ui-monospace,Menlo,monospace;letter-spacing:.04em}
+.hint{font-size:12.5px;color:var(--ui-mute);margin-top:7px;line-height:1.5}
+.hint.ok{color:var(--ok)}.hint.bad{color:var(--bad)}
+.sticky{position:sticky;top:16px}
+.preview-stage{border-radius:14px;padding:26px 14px;transition:background .3s}
+.linkbox{display:flex;gap:8px;margin-top:10px}
+.linkbox input{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.qr-wrap{display:flex;gap:16px;align-items:center;margin-top:14px;flex-wrap:wrap}
+#qr{background:#fff;padding:10px;border-radius:12px;width:200px;height:200px;display:grid;place-items:center}
+#qr img,#qr canvas{display:block}
+.qr-side{flex:1;min-width:160px;font-size:13px;color:var(--ui-mute);line-height:1.5}
+.fit{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;margin:2px 4px 2px 0;border:1px solid var(--ui-line)}
+.fit.yes{color:var(--ok);border-color:rgba(62,207,142,.4)}.fit.no{color:var(--ui-mute);text-decoration:line-through}
+.saved{list-style:none;margin:10px 0 0;padding:0}
+.saved li{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--ui-line)}
+.saved li:first-child{border-top:0}
+.saved .dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:15px;flex:none}
+.saved .nm{flex:1;min-width:0}
+.saved .nm b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saved .nm span{font-size:12px;color:var(--ui-mute)}
+.empty{color:var(--ui-mute);font-size:13px;margin-top:8px}
+.testbar{display:flex;gap:8px;margin-top:14px}
+.testbar input{font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.toolbar{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+
+/* ---------- CARD ---------- */
+.lcard{--accent:#c2562f;position:relative;border-radius:22px;overflow:hidden;padding:22px 20px 18px;width:100%;max-width:380px;margin:0 auto;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.lc-head{display:flex;align-items:center;gap:13px}
+.lc-logo{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-size:24px;font-weight:700;flex:none;line-height:1}
+.lc-titles{min-width:0}
+.lc-name{font-size:25px;line-height:1.08;margin:0;overflow-wrap:break-word;hyphens:auto}
+.lc-tag{font-size:13px;opacity:.72;margin-top:4px}
+.lc-label{font-size:11px;text-transform:uppercase;letter-spacing:.14em;opacity:.6;margin:20px 0 10px}
+.lc-grid{display:grid;gap:10px;margin-bottom:16px}
+.lc-stamp{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;position:relative;font-size:13px;font-weight:600;transition:all .3s}
+.lc-stamp svg{width:56%;height:56%}
+.lc-stamp.new{animation:pop .7s cubic-bezier(.2,1.7,.4,1)}
+@keyframes pop{0%{transform:scale(.2) rotate(-30deg);opacity:0}100%{transform:scale(1) rotate(-8deg);opacity:1}}
+.lc-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;font-size:13px}
+.lc-reward span{opacity:.65;font-size:11px;text-transform:uppercase;letter-spacing:.12em}
+.lc-reward strong{display:block;font-size:16px;margin-top:3px}
+.lc-count{font-variant-numeric:tabular-nums;font-size:14px;font-weight:700;white-space:nowrap}
+
+/* Restaurant */
+.t-restaurant{background:radial-gradient(circle at 15% 10%,rgba(255,255,255,.7),transparent 40%),radial-gradient(circle at 90% 100%,rgba(194,86,47,.08),transparent 50%),#f6efe2;color:#3a2a1d}
+.t-restaurant .lc-name{font-family:'Playfair Display',Georgia,serif;font-weight:600}
+.t-restaurant .lc-tag{font-family:'Playfair Display',Georgia,serif;font-style:italic;font-weight:500}
+.t-restaurant .lc-logo{background:var(--accent);color:#fff}
+.t-restaurant .lc-grid{border-top:1.5px dashed rgba(58,42,29,.25);border-bottom:1.5px dashed rgba(58,42,29,.25);padding:16px 0}
+.t-restaurant .lc-label{display:none}
+.t-restaurant .lc-stamp{border:1.5px dashed rgba(58,42,29,.32);color:rgba(58,42,29,.4)}
+.t-restaurant .lc-stamp.on{background:var(--accent);border:2px solid var(--accent);color:#fff;transform:rotate(-8deg);box-shadow:0 0 0 3px #f6efe2 inset}
+.t-restaurant .lc-stamp.reward:not(.on){border-style:solid;border-color:var(--accent);color:var(--accent)}
+.t-restaurant .lc-count{color:var(--accent)}
+.page-restaurant{background:#e9dfcc}
+
+/* Bar */
+.t-bar{background:radial-gradient(110% 70% at 100% 0%,color-mix(in srgb,var(--accent) 28%,transparent),transparent 60%),radial-gradient(80% 60% at 0% 100%,rgba(120,80,255,.18),transparent 60%),#0d0e1a;color:#eef0ff;border:1px solid rgba(255,255,255,.07)}
+.t-bar .lc-name{font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;letter-spacing:.04em;color:var(--accent);text-shadow:0 0 22px color-mix(in srgb,var(--accent) 55%,transparent)}
+.t-bar .lc-tag{letter-spacing:.06em}
+.t-bar .lc-logo{border:2px solid var(--accent);color:var(--accent);box-shadow:0 0 16px color-mix(in srgb,var(--accent) 45%,transparent),inset 0 0 12px color-mix(in srgb,var(--accent) 35%,transparent)}
+.t-bar .lc-stamp{border:1.5px solid rgba(255,255,255,.14);color:rgba(255,255,255,.3)}
+.t-bar .lc-stamp.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--accent) 55%,transparent),inset 0 0 10px color-mix(in srgb,var(--accent) 35%,transparent)}
+.t-bar .lc-stamp.reward:not(.on){border-color:color-mix(in srgb,var(--accent) 50%,transparent);color:color-mix(in srgb,var(--accent) 70%,transparent)}
+.t-bar .lc-count{color:var(--accent)}
+.page-bar{background:#06060c}
+
+/* Barber */
+.t-barber{background:linear-gradient(180deg,#1b1a18,#121110);color:#f3ece0;padding-top:36px;border:1px solid rgba(243,236,224,.08)}
+.t-barber::before{content:'';position:absolute;left:0;right:0;top:0;height:14px;background:repeating-linear-gradient(-45deg,var(--accent) 0 12px,#f3ece0 12px 24px,#1d3f8f 24px 36px,#f3ece0 36px 48px);background-size:68px 14px;animation:pole 3s linear infinite}
+@keyframes pole{to{background-position:68px 0}}
+.t-barber .lc-name{font-family:'Abril Fatface',Georgia,serif;font-size:29px;font-weight:400}
+.t-barber .lc-tag{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.2em;font-size:11px}
+.t-barber .lc-label{font-family:'Oswald',sans-serif}
+.t-barber .lc-logo{background:#f3ece0;color:#141312;border:3px double var(--accent)}
+.t-barber .lc-stamp{border:2px solid rgba(243,236,224,.16);color:rgba(243,236,224,.32);font-family:'Oswald',sans-serif;font-size:15px}
+.t-barber .lc-stamp.on{background:#f3ece0;color:var(--accent);border-color:#f3ece0;transform:rotate(-8deg)}
+.t-barber .lc-stamp.reward:not(.on){border-color:var(--accent);color:var(--accent)}
+.t-barber .lc-reward strong{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.t-barber .lc-count{font-family:'Oswald',sans-serif;color:var(--accent);font-size:16px}
+.page-barber{background:#0a0908}
+
+/* ---------- CUSTOMER ---------- */
+.cust{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:32px 16px 48px}
+.cust-wrap{width:100%;max-width:380px}
+.cbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:22px;padding:17px;border-radius:16px;border:0;font-size:17px;font-weight:700;background:var(--accent);color:#fff;box-shadow:0 10px 30px color-mix(in srgb,var(--accent) 40%,transparent);transition:transform .1s}
+.cbtn:active{transform:scale(.98)}
+.cbtn svg{width:22px;height:22px}
+.page-bar .cbtn{color:#0d0e1a}
+.cmsg{margin-top:14px;padding:12px 14px;border-radius:12px;font-size:14px;line-height:1.45;display:none}
+.cmsg.show{display:block}
+.cmsg.ok{background:rgba(62,207,142,.14);color:#1f8f5d}
+.cmsg.bad{background:rgba(255,107,107,.14);color:#d64545}
+.cmsg.info{background:rgba(127,127,127,.14)}
+.page-bar .cmsg.ok,.page-barber .cmsg.ok{color:#6fe3ae}
+.page-bar .cmsg.bad,.page-barber .cmsg.bad{color:#ff8f8f}
+.page-bar .cmsg.info,.page-barber .cmsg.info{color:#d9dbe6}
+.cmeta{margin-top:18px;font-size:13px;opacity:.65;text-align:center;line-height:1.6}
+.page-restaurant .cmeta,.page-restaurant .chow{color:#3a2a1d}
+.page-bar .cmeta,.page-bar .chow,.page-barber .cmeta,.page-barber .chow{color:#e8e6ef}
+.chow{margin-top:18px;font-size:13px;opacity:.75;line-height:1.55}
+.chow summary{cursor:pointer;font-weight:600}
+.chow ol{padding-left:18px;margin:8px 0 0}
+
+/* scan overlay */
+.scan{position:fixed;inset:0;background:rgba(5,6,10,.82);backdrop-filter:blur(6px);display:grid;place-items:center;z-index:50;padding:20px}
+.scan-box{text-align:center;color:#fff;max-width:320px}
+.rings{position:relative;width:170px;height:170px;margin:0 auto 22px;display:grid;place-items:center}
+.rings span{position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent,#8aa6ff);opacity:0;animation:ring 2.2s ease-out infinite}
+.rings span:nth-child(2){animation-delay:.73s}.rings span:nth-child(3){animation-delay:1.46s}
+@keyframes ring{0%{transform:scale(.35);opacity:.9}100%{transform:scale(1);opacity:0}}
+.rings .ico{width:74px;height:74px;border-radius:50%;background:var(--accent,#8aa6ff);display:grid;place-items:center;color:#fff}
+.rings .ico svg{width:38px;height:38px}
+.scan h3{margin:0 0 6px;font-size:20px}
+.scan p{margin:0 0 22px;opacity:.75;font-size:14px;line-height:1.5}
+.scan button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:99px;padding:10px 22px}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#1f222a;color:#fff;border:1px solid var(--ui-line);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:60}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- ================= ADMIN / GENERATOR ================= -->
+<div id="admin" class="admin hidden">
+  <h1>Loyalty Card Generator</h1>
+  <p class="sub">Set up a stamp card for each place. Customers open the card link on their phone and tap it against the venue's NFC card to collect a stamp. Only the NFC card with the serial you enter here can give stamps.</p>
+
+  <div class="layout">
+    <div>
+      <div class="panel">
+        <h2>Business</h2>
+        <label for="fName">Business name</label>
+        <input id="fName" maxlength="40" placeholder="e.g. Ivo's Barbershop">
+        <label for="fTag">Tagline (optional)</label>
+        <input id="fTag" maxlength="40" placeholder="e.g. Est. 2014 · Sofia">
+
+        <label>Theme</label>
+        <div class="themes" id="themes"></div>
+
+        <div class="row">
+          <div><label for="fEmoji">Logo (emoji or initials)</label><input id="fEmoji" maxlength="3"></div>
+          <div><label for="fColor">Accent colour</label><input id="fColor" type="color"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Reward</h2>
+        <div class="row">
+          <div><label for="fStamps">Stamps needed</label>
+            <select id="fStamps"></select></div>
+          <div><label for="fCd">Time between stamps</label>
+            <select id="fCd">
+              <option value="0">No limit</option>
+              <option value="60">1 hour</option>
+              <option value="240">4 hours</option>
+              <option value="720">12 hours</option>
+              <option value="1440">24 hours</option>
+              <option value="10080">7 days</option>
+            </select></div>
+        </div>
+        <div class="hint">The time limit stops someone getting several stamps from one visit.</div>
+        <label for="fReward">Reward</label>
+        <input id="fReward" maxlength="40" placeholder="e.g. Free haircut">
+      </div>
+
+      <div class="panel">
+        <h2>NFC card</h2>
+        <label for="fSerial">Serial ID of the venue's NFC card</label>
+        <div class="serial-row">
+          <input id="fSerial" placeholder="04:A2:3B:1C:6F:80:00" autocomplete="off" spellcheck="false">
+          <button class="btn" id="scanSerialBtn">Scan card</button>
+        </div>
+        <div class="hint" id="serialHint">Type the serial (NFC Tools → "Serial number"), or press Scan card on an Android phone in Chrome and touch the card.</div>
+      </div>
+
+      <div class="panel">
+        <h2>Saved cards</h2>
+        <ul class="saved" id="savedList"></ul>
+        <div class="empty" id="savedEmpty">No saved cards yet.</div>
+        <div class="toolbar">
+          <button class="btn primary" id="saveBtn">Save card</button>
+          <button class="btn" id="newBtn">New card</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky">
+      <div class="panel">
+        <h2>Preview</h2>
+        <div class="preview-stage" id="previewStage"><div id="preview"></div></div>
+        <div class="testbar">
+          <input id="testSerial" placeholder="Test a serial…" spellcheck="false">
+          <button class="btn small" id="testBtn">Simulate tap</button>
+          <button class="btn small" id="testReset" title="Reset preview">↺</button>
+        </div>
+        <div class="hint" id="testHint">Try the right serial and a wrong one to check that only your card stamps.</div>
+      </div>
+
+      <div class="panel">
+        <h2>Customer link</h2>
+        <div id="linkMissing" class="hint">Add the NFC serial to create the link.</div>
+        <div id="linkReady" class="hidden">
+          <div class="linkbox">
+            <input id="linkOut" readonly>
+            <button class="btn small" id="copyBtn">Copy</button>
+          </div>
+          <div class="qr-wrap">
+            <div id="qr"></div>
+            <div class="qr-side">
+              <div id="linkLen"></div>
+              <div style="margin-top:10px">Print the QR on the counter, or write the link onto the venue's NFC card so a first tap opens the card.</div>
+              <div class="toolbar" style="margin-top:10px">
+                <a class="btn small" id="openLink" target="_blank" rel="noopener">Open card</a>
+                <a class="btn small" id="dlQr" download="loyalty-qr.png">Save QR</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= CUSTOMER CARD ================= -->
+<div id="cust" class="cust hidden">
+  <div class="cust-wrap">
+    <div id="cCard"></div>
+    <button class="cbtn" id="cAction"></button>
+    <div class="cmsg" id="cMsg"></div>
+    <div class="cmeta" id="cMeta"></div>
+    <details class="chow">
+      <summary>How it works</summary>
+      <ol>
+        <li>Press the button above.</li>
+        <li>Touch the back of your phone to the NFC card at the counter.</li>
+        <li>Collect all stamps, then tap the card again to claim your reward.</li>
+      </ol>
+      <p style="margin:8px 0 0">Stamps are collected with NFC in Chrome on Android. Add this page to your home screen to find it quickly. Your stamps are saved on this phone, in this browser.</p>
+    </details>
+  </div>
+</div>
+
+<!-- scan overlay -->
+<div id="scan" class="scan hidden">
+  <div class="scan-box">
+    <div class="rings"><span></span><span></span><span></span>
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 8.5a5 5 0 0 1 0 7M9.5 6a9 9 0 0 1 0 12M13 4a12.5 12.5 0 0 1 0 16M16.5 7.5a7 7 0 0 1 0 9"/></svg></div>
+    </div>
+    <h3 id="scanTitle">Hold your phone to the card</h3>
+    <p id="scanSub">Touch the back of your phone to the NFC card at the counter.</p>
+    <button id="scanCancel">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= SHARED ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
+};
+const SVG = (p, sw=1.8) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const ICONS = {
+  restaurant: SVG('<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10"/><path d="M17 21V3c-2.2 1-3.2 4-3.2 7.2 0 1.8 1.2 2.8 3.2 2.8"/>'),
+  bar:        SVG('<path d="M4 4h16l-8 9.5z"/><path d="M12 13.5V20M8 20h8"/><path d="M14.5 4 18 1.5"/><circle cx="17.5" cy="7" r="1.2"/>'),
+  barber:     SVG('<circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.1 15.9 19 3M15.9 15.9 5 3"/>'),
+  gift:       SVG('<rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13"/><path d="M12 8c-1.6-3.6-6-4.2-6-1.6C6 8 10 8 12 8zM12 8c1.6-3.6 6-4.2 6-1.6C18 8 14 8 12 8z"/>'),
+  nfc:        SVG('<path d="M6 8.5a5 5 0 0 1 0 7M9.5 6a9 9 0 0 1 0 12M13 4a12.5 12.5 0 0 1 0 16"/>', 2)
+};
+const THEMES = {
+  restaurant: { label:'Restaurant', accent:'#c2562f', logo:'🍝', reward:'Free dessert',    stampWord:'visit' },
+  bar:        { label:'Bar',        accent:'#ffb020', logo:'🍸', reward:'Free cocktail',   stampWord:'round' },
+  barber:     { label:'Barber',     accent:'#c8202f', logo:'💈', reward:'Free haircut',    stampWord:'cut' }
+};
+
+// base64url for UTF-8 JSON (works with Cyrillic too)
+const enc = o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const dec = s => JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/')))));
+
+const normSerial = s => String(s || '').replace(/[^0-9a-f]/gi,'').toUpperCase();
+const prettySerial = s => normSerial(s).match(/.{1,2}/g)?.join(':') || '';
+
+async function sha256hex(str){
+  if (window.crypto?.subtle){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+  // fallback (non-https): simple FNV-based hash, only so the preview keeps working
+  let h1 = 0x811c9dc5, h2 = 0x01000193;
+  for (const ch of str){ h1 = Math.imul(h1 ^ ch.charCodeAt(0), 16777619); h2 = Math.imul(h2 ^ ch.charCodeAt(0), 2246822519); }
+  return ((h1>>>0).toString(16).padStart(8,'0') + (h2>>>0).toString(16).padStart(8,'0')).repeat(4);
+}
+// The link only stores a fingerprint of the serial, never the serial itself
+const serialHash = async (id, serial) => (await sha256hex(id + ':' + normSerial(serial))).slice(0,16);
+async function serialMatches(cfg, serial){
+  if (!normSerial(serial)) return false;
+  return (await serialHash(cfg.id, serial)) === cfg.h;
+}
+
+function gridCols(n){
+  if (n <= 5) return n;
+  for (const c of [5,4,6,3]) if (n % c === 0) return c;
+  return 4;
+}
+
+function cardHTML(c, n = 0, fresh = -1){
+  const t = THEMES[c.t] ? c.t : 'barber';
+  let cells = '';
+  for (let i = 0; i < c.s; i++){
+    const last = i === c.s - 1, on = i < n;
+    const inner = on ? ICONS[last ? 'gift' : t] : (last ? ICONS.gift : (i + 1));
+    cells += `<div class="lc-stamp${on?' on':''}${last?' reward':''}${i===fresh?' new':''}">${inner}</div>`;
+  }
+  const done = n >= c.s;
+  return `<div class="lcard t-${t}" style="--accent:${esc(c.c)}">
+    <div class="lc-head">
+      <div class="lc-logo">${esc(c.e || '★')}</div>
+      <div class="lc-titles">
+        <h2 class="lc-name">${esc(c.n || 'Your business')}</h2>
+        ${c.tg ? `<div class="lc-tag">${esc(c.tg)}</div>` : ''}
+      </div>
+    </div>
+    <div class="lc-label">Loyalty card</div>
+    <div class="lc-grid" style="grid-template-columns:repeat(${gridCols(c.s)},1fr)">${cells}</div>
+    <div class="lc-foot">
+      <div class="lc-reward"><span>${done ? 'Reward unlocked' : `Collect ${c.s} for`}</span><strong>${esc(c.r || 'A reward')}</strong></div>
+      <div class="lc-count">${Math.min(n, c.s)} / ${c.s}</div>
+    </div>
+  </div>`;
+}
+
+let toastT;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ---- Web NFC: read a tag's serial number ---- */
+const nfcSupported = () => 'NDEFReader' in window;
+let scanCtrl = null;
+function readSerial(onError){
+  return new Promise(async (resolve, reject) => {
+    scanCtrl = new AbortController();
+    const signal = scanCtrl.signal;
+    signal.addEventListener('abort', () => reject(new DOMException('Scan cancelled', 'AbortError')));
+    try {
+      const reader = new NDEFReader();
+      reader.onreading = e => { resolve(e.serialNumber || ''); scanCtrl.abort(); };
+      reader.onreadingerror = () => onError && onError();
+      await reader.scan({ signal });
+    } catch (e) { reject(e); }
+  });
+}
+function showScan(title, sub, accent){
+  $('#scanTitle').textContent = title;
+  $('#scanSub').textContent = sub;
+  $('#scan').style.setProperty('--accent', accent || '#8aa6ff');
+  $('#scan').classList.remove('hidden');
+}
+const hideScan = () => $('#scan').classList.add('hidden');
+$('#scanCancel').onclick = () => { scanCtrl?.abort(); hideScan(); };
+
+function nfcErrorText(e){
+  if (e?.name === 'NotAllowedError') return 'NFC permission was blocked. Allow NFC for this site in Chrome settings and try again.';
+  if (e?.name === 'NotSupportedError') return 'NFC is turned off or not available. Turn on NFC in your phone settings and try again.';
+  return 'Could not start the NFC reader. Make sure NFC is on and try again.';
+}
+
+/* ================= ROUTING ================= */
+function route(){
+  const m = location.hash.match(/^#c=(.+)$/);
+  if (m){
+    try { const cfg = dec(m[1]); if (cfg && cfg.id && cfg.h) return startCustomer(cfg); } catch(e){}
+  }
+  startAdmin();
+}
+
+/* ================= ADMIN ================= */
+const SAVED_KEY = 'lc_saved_v1';
+let cur, curSerial = '', previewN = 0, adminReady = false;
+
+const rid = () => Math.random().toString(36).slice(2, 8);
+function freshCfg(theme = 'barber'){
+  const T = THEMES[theme];
+  return { id: rid(), n:'', tg:'', t: theme, s: 8, r: T.reward, c: T.accent, e: T.logo, cd: 240, h: '' };
+}
+
+function startAdmin(){
+  $('#cust').classList.add('hidden');
+  $('#admin').classList.remove('hidden');
+  document.body.className = '';
+  if (adminReady) return;
+  adminReady = true;
+
+  // theme buttons
+  $('#themes').innerHTML = Object.entries(THEMES).map(([k, T]) =>
+    `<button class="theme-opt" data-t="${k}"><div class="sw ${k}"></div>${T.label}</button>`).join('');
+  $('#themes').onclick = e => {
+    const b = e.target.closest('.theme-opt'); if (!b) return;
+    const k = b.dataset.t, T = THEMES[k], oldT = THEMES[cur.t];
+    // swap in theme defaults unless the user changed them
+    if (cur.c === oldT.accent) cur.c = T.accent;
+    if (cur.e === oldT.logo) cur.e = T.logo;
+    if (cur.r === oldT.reward) cur.r = T.reward;
+    cur.t = k; fillForm(); update();
+  };
+  $('#fStamps').innerHTML = Array.from({length: 8}, (_, i) => i + 5).map(n => `<option value="${n}">${n}</option>`).join('');
+
+  const bind = (id, key, num) => $(id).addEventListener('input', e => { cur[key] = num ? +e.target.value : e.target.value; update(); });
+  bind('#fName','n'); bind('#fTag','tg'); bind('#fEmoji','e'); bind('#fColor','c');
+  bind('#fStamps','s',true); bind('#fCd','cd',true); bind('#fReward','r');
+  $('#fSerial').addEventListener('input', e => { curSerial = e.target.value; update(); });
+  $('#fSerial').addEventListener('blur', e => { if (normSerial(curSerial)) { curSerial = prettySerial(curSerial); e.target.value = curSerial; } });
+
+  $('#scanSerialBtn').onclick = async () => {
+    const hint = $('#serialHint');
+    if (!nfcSupported()){
+      hint.className = 'hint bad';
+      hint.textContent = 'Scanning needs Chrome on Android, on a https page. You can type the serial instead — the NFC Tools app shows it as "Serial number".';
+      return;
+    }
+    showScan('Touch the venue\'s NFC card', 'Hold the card to the back of this phone to read its serial ID.', cur.c);
+    try {
+      const s = await readSerial(() => { $('#scanSub').textContent = 'Couldn\'t read that — hold the card still. If it keeps failing, format the card as NDEF in NFC Tools.'; });
+      hideScan();
+      if (!normSerial(s)) { hint.className = 'hint bad'; hint.textContent = 'This card did not report a serial ID. Try another card.'; return; }
+      curSerial = prettySerial(s); $('#fSerial').value = curSerial;
+      hint.className = 'hint ok'; hint.textContent = 'Card read: ' + curSerial;
+      update();
+    } catch (e) {
+      hideScan();
+      if (e.name !== 'AbortError'){ hint.className = 'hint bad'; hint.textContent = nfcErrorText(e); }
+    }
+  };
+
+  $('#testBtn').onclick = async () => {
+    const hint = $('#testHint'), v = $('#testSerial').value;
+    if (!cur.h){ hint.className = 'hint bad'; hint.textContent = 'Add the NFC serial first.'; return; }
+    if (!(await serialMatches(cur, v))){ hint.className = 'hint bad'; hint.textContent = 'Rejected — that is not this venue\'s card.'; return; }
+    if (previewN >= cur.s){ previewN = 0; hint.className = 'hint ok'; hint.textContent = 'Reward redeemed — the card starts again.'; renderPreview(); return; }
+    previewN++; hint.className = 'hint ok';
+    hint.textContent = previewN >= cur.s ? 'Card full — reward unlocked. Tap again to redeem.' : `Stamp added (${previewN}/${cur.s}).`;
+    renderPreview(previewN - 1);
+  };
+  $('#testReset').onclick = () => { previewN = 0; renderPreview(); $('#testHint').className = 'hint'; $('#testHint').textContent = 'Preview reset.'; };
+
+  $('#copyBtn').onclick = async () => {
+    const v = $('#linkOut').value;
+    try { await navigator.clipboard.writeText(v); toast('Link copied'); }
+    catch(e){ $('#linkOut').select(); toast('Select the link and copy it'); }
+  };
+  $('#saveBtn').onclick = saveCurrent;
+  $('#newBtn').onclick = () => { cur = freshCfg(cur.t); curSerial = ''; previewN = 0; fillForm(); update(); toast('New card'); };
+
+  cur = freshCfg('barber');
+  fillForm(); update(); renderSaved();
+}
+
+function fillForm(){
+  $('#fName').value = cur.n; $('#fTag').value = cur.tg; $('#fEmoji').value = cur.e;
+  $('#fColor').value = cur.c; $('#fStamps').value = cur.s; $('#fCd').value = cur.cd;
+  $('#fReward').value = cur.r; $('#fSerial').value = curSerial;
+  document.querySelectorAll('.theme-opt').forEach(b => b.classList.toggle('on', b.dataset.t === cur.t));
+}
+
+function renderPreview(fresh = -1){
+  $('#preview').innerHTML = cardHTML(cur, previewN, fresh);
+  $('#previewStage').className = 'preview-stage page-' + cur.t;
+}
+
+let updSeq = 0;
+async function update(){
+  if (previewN > cur.s) previewN = cur.s;
+  renderPreview();
+  const seq = ++updSeq;
+  cur.h = normSerial(curSerial) ? await serialHash(cur.id, curSerial) : '';
+  if (seq !== updSeq) return;
+  renderLink();
+}
+
+function customerLink(cfg){
+  const base = location.href.split('#')[0];
+  const { id, n, tg, t, s, r, c, e, cd, h } = cfg;
+  const o = { id, n, t, s, r, c, e, cd, h }; if (tg) o.tg = tg;
+  return base + '#c=' + enc(o);
+}
+
+function renderLink(){
+  if (!cur.h){ $('#linkMissing').classList.remove('hidden'); $('#linkReady').classList.add('hidden'); return; }
+  $('#linkMissing').classList.add('hidden'); $('#linkReady').classList.remove('hidden');
+  const link = customerLink(cur);
+  $('#linkOut').value = link;
+  $('#openLink').href = link;
+  // NFC chip capacity (approx. usable NDEF bytes for a URL record)
+  const bytes = new TextEncoder().encode(link).length - 6;
+  const chips = [['NTAG213',132],['NTAG215',490],['NTAG216',850]];
+  $('#linkLen').innerHTML = `<div>Link: ${bytes + 6} characters. Fits on:</div>` +
+    chips.map(([nm, cap]) => `<span class="fit ${bytes <= cap ? 'yes' : 'no'}">${nm}</span>`).join('');
+  const box = $('#qr'); box.innerHTML = '';
+  if (window.QRCode){
+    new QRCode(box, { text: link, width: 180, height: 180, colorDark:'#000000', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    setTimeout(() => {
+      const cv = box.querySelector('canvas');
+      if (cv) $('#dlQr').href = cv.toDataURL('image/png');
+      $('#dlQr').download = (cur.n || 'loyalty').replace(/[^\w\-]+/g,'-').toLowerCase() + '-qr.png';
+    }, 50);
+  } else {
+    box.innerHTML = '<span style="color:#555;font-size:12px;padding:10px;text-align:center">QR code needs an internet connection</span>';
+  }
+}
+
+function getSaved(){ return store.get(SAVED_KEY) || []; }
+function saveCurrent(){
+  if (!cur.n.trim()){ toast('Add a business name first'); $('#fName').focus(); return; }
+  if (!cur.h){ toast('Add the NFC serial first'); $('#fSerial').focus(); return; }
+  const list = getSaved().filter(x => x.cfg.id !== cur.id);
+  list.unshift({ cfg: { ...cur }, serial: prettySerial(curSerial), at: Date.now() });
+  if (!store.set(SAVED_KEY, list)) { toast('Could not save in this browser'); return; }
+  renderSaved(); toast('Saved');
+}
+function renderSaved(){
+  const list = getSaved();
+  $('#savedEmpty').classList.toggle('hidden', list.length > 0);
+  $('#savedList').innerHTML = list.map((x, i) => `<li>
+    <div class="dot" style="background:${esc(x.cfg.c)}22;color:${esc(x.cfg.c)}">${esc(x.cfg.e || '★')}</div>
+    <div class="nm"><b>${esc(x.cfg.n)}</b><span>${THEMES[x.cfg.t]?.label || ''} · ${x.cfg.s} stamps · ${esc(x.serial)}</span></div>
+    <button class="btn small" data-edit="${i}">Edit</button>
+    <button class="btn small danger" data-del="${i}">Delete</button></li>`).join('');
+  $('#savedList').onclick = e => {
+    const ed = e.target.closest('[data-edit]'), dl = e.target.closest('[data-del]');
+    const L = getSaved();
+    if (ed){ const x = L[+ed.dataset.edit]; cur = { ...x.cfg }; curSerial = x.serial; previewN = 0; fillForm(); update(); window.scrollTo({top:0,behavior:'smooth'}); }
+    if (dl){
+      if (dl.dataset.armed){ L.splice(+dl.dataset.del, 1); store.set(SAVED_KEY, L); renderSaved(); toast('Deleted'); }
+      else { dl.dataset.armed = 1; dl.textContent = 'Sure?'; setTimeout(() => { if (dl.isConnected){ delete dl.dataset.armed; dl.textContent = 'Delete'; } }, 2500); }
+    }
+  };
+}
+
+/* ================= CUSTOMER ================= */
+let C, S, stateKey;
+function startCustomer(cfg){
+  C = { s: 8, cd: 0, ...cfg };
+  stateKey = 'lc_state_' + C.id;
+  S = store.get(stateKey) || { n: 0, last: 0, rewards: 0, first: Date.now() };
+  $('#admin').classList.add('hidden');
+  $('#cust').classList.remove('hidden');
+  document.body.className = 'page-' + C.t;
+  document.body.style.setProperty('--accent', C.c);
+  document.title = (C.n || 'Loyalty') + ' — Loyalty card';
+  document.querySelector('meta[name=theme-color]').content = getComputedStyle(document.body).backgroundColor;
+  $('#cAction').onclick = onAction;
+  renderCustomer();
+  if (!nfcSupported()){
+    msg('info', /iPhone|iPad|iPod/.test(navigator.userAgent)
+      ? 'Stamps are collected with NFC, which iPhone browsers don\'t allow for websites yet. Please use an Android phone with Chrome, or ask the staff.'
+      : 'To collect stamps, open this page in Chrome on an Android phone with NFC turned on.');
+  }
+}
+function saveState(){ store.set(stateKey, S); }
+function msg(type, text){ const m = $('#cMsg'); m.className = 'cmsg show ' + type; m.textContent = text; }
+function clearMsg(){ $('#cMsg').className = 'cmsg'; }
+
+function fmtWait(ms){
+  const m = Math.ceil(ms / 60000);
+  if (m < 60) return m + ' min';
+  const h = Math.floor(m / 60), r = m % 60;
+  if (h < 24) return h + ' h' + (r ? ' ' + r + ' min' : '');
+  const d = Math.floor(h / 24); return d + ' day' + (d > 1 ? 's' : '') + (h % 24 ? ' ' + (h % 24) + ' h' : '');
+}
+
+function renderCustomer(fresh = -1){
+  $('#cCard').innerHTML = cardHTML(C, S.n, fresh);
+  const full = S.n >= C.s;
+  $('#cAction').innerHTML = ICONS[full ? 'gift' : 'nfc'] + (full ? 'Tap to claim your reward' : 'Tap to collect a stamp');
+  const bits = [];
+  if (S.rewards) bits.push(`Rewards claimed: <b>${S.rewards}</b>`);
+  if (S.last) bits.push('Last stamp: ' + new Date(S.last).toLocaleDateString(undefined, { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }));
+  $('#cMeta').innerHTML = bits.join(' · ');
+}
+
+async function onAction(){
+  clearMsg();
+  if (!nfcSupported()){
+    msg('bad', 'This browser can\'t read NFC. Open the card in Chrome on Android with NFC turned on.');
+    return;
+  }
+  const full = S.n >= C.s;
+  if (!full && C.cd && S.last && Date.now() - S.last < C.cd * 60000){
+    msg('info', `You already got a stamp recently. Next stamp available in ${fmtWait(C.cd * 60000 - (Date.now() - S.last))}.`);
+    return;
+  }
+  showScan(full ? 'Claim your reward' : 'Hold your phone to the card',
+           'Touch the back of your phone to the ' + (C.n || 'venue') + ' NFC card at the counter.', C.c);
+  let serial;
+  try {
+    serial = await readSerial(() => { $('#scanSub').textContent = 'Couldn\'t read the card — hold your phone still against it.'; });
+  } catch (e) {
+    hideScan();
+    if (e.name !== 'AbortError') msg('bad', nfcErrorText(e));
+    return;
+  }
+  hideScan();
+  if (!(await serialMatches(C, serial))){
+    navigator.vibrate?.([60, 60, 60]);
+    msg('bad', `That card isn't from ${C.n || 'this venue'}. Tap the card at the counter.`);
+    return;
+  }
+  if (full){
+    S.n = 0; S.rewards = (S.rewards || 0) + 1; saveState();
+    navigator.vibrate?.([80, 40, 80, 40, 160]);
+    renderCustomer();
+    msg('ok', `Enjoy your ${C.r || 'reward'}! Your card has started again.`);
+    return;
+  }
+  S.n++; S.last = Date.now(); saveState();
+  navigator.vibrate?.(120);
+  renderCustomer(S.n - 1);
+  msg('ok', S.n >= C.s
+    ? `Card complete! Show this to the staff and tap their card to claim your ${C.r || 'reward'}.`
+    : `Stamp added — ${C.s - S.n} more to go.`);
+}
+
+window.addEventListener('hashchange', () => location.reload());
+route();
+</script>
+</body>
+</html>
